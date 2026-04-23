@@ -37,7 +37,11 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     }
 
     const ext = guessExtension(req.file.mimetype);
-    const audioFile = new File([req.file.buffer], `resposta.${ext}`, { type: req.file.mimetype || 'audio/webm' });
+    const audioFile = await toFile(
+  req.file.buffer,
+  `resposta.${ext}`,
+  { type: req.file.mimetype || 'audio/webm' }
+);
 
     const transcript = await client.audio.transcriptions.create({
       file: audioFile,
@@ -46,10 +50,16 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     });
 
     return res.json({ text: transcript.text || '' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Falha ao transcrever o áudio.' });
-  }
+} catch (error) {
+  console.error('Erro na transcrição:', error);
+
+  return res.status(500).json({
+    error:
+      error?.message ||
+      error?.error?.message ||
+      'Falha ao transcrever o áudio.'
+  });
+}
 });
 
 app.get('*', (_req, res) => {
