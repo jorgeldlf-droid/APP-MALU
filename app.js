@@ -53,9 +53,7 @@ function bindEvents() {
 }
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js').catch(() => {}));
-  }
+  // Desativado temporariamente durante os testes
 }
 
 function checkSupport() {
