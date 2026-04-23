@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
