@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://app-malu-backend.onrender.com';
+const API_BASE_URL = '';
 
 const QUESTIONS = [
   { label: 'A', text: 'Quais são os medicamentos de uso contínuo que você utiliza?' },
@@ -347,11 +347,10 @@ async function transcribeCurrentAudio() {
     formData.append('questionLabel', QUESTIONS[state.currentIndex].label);
     formData.append('questionText', QUESTIONS[state.currentIndex].text);
 
-    const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
-      method: 'POST',
-      body: formData,
-      mode: 'cors'
-    });
+const response = await fetch('/api/transcribe', {
+  method: 'POST',
+  body: formData
+});
 
     const data = await response.json();
 
