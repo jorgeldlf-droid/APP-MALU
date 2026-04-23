@@ -5,23 +5,18 @@ import multer from 'multer';
 import OpenAI, { toFile } from 'openai';
 
 const app = express();
+
+// Upload de áudio em memória
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB
 });
+
 const port = process.env.PORT || 3000;
 
-const allowedOrigins = [
-  'https://app-malu.vercel.app',
-  'https://app-malu-87snh5631-jorgeldlf-8468s-projects.vercel.app'
-];
-
+// 🔥 CORS LIBERADO (evita erro de fetch)
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, true); // temporário para teste
-  },
+  origin: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
@@ -29,39 +24,55 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
+// 🔑 Cliente OpenAI
 let client = null;
 if (process.env.OPENAI_API_KEY) {
-  client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
 }
 
+// 🔍 Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, transcriptionConfigured: Boolean(client) });
+  res.json({
+    ok: true,
+    transcriptionConfigured: Boolean(client)
+  });
 });
 
+// 🎤 Transcrição
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Nenhum arquivo de áudio foi enviado.' });
+      return res.status(400).json({
+        error: 'Nenhum arquivo de áudio foi enviado.'
+      });
     }
 
     if (!client) {
-      return res.status(500).json({ error: 'A chave da API de transcrição não foi configurada no backend.' });
+      return res.status(500).json({
+        error: 'API key não configurada no backend.'
+      });
     }
 
     const ext = guessExtension(req.file.mimetype);
+
     const audioFile = await toFile(
       req.file.buffer,
-      `resposta.${ext}`,
+      `audio.${ext}`,
       { type: req.file.mimetype || 'audio/webm' }
     );
 
-    const transcript = await client.audio.transcriptions.create({
+    const response = await client.audio.transcriptions.create({
       file: audioFile,
       model: 'gpt-4o-mini-transcribe',
       language: 'pt'
     });
 
-    return res.json({ text: transcript.text || '' });
+    return res.json({
+      text: response.text || ''
+    });
+
   } catch (error) {
     console.error('Erro na transcrição:', error);
 
@@ -69,15 +80,17 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
       error:
         error?.message ||
         error?.error?.message ||
-        'Falha ao transcrever o áudio.'
+        'Erro interno ao transcrever áudio.'
     });
   }
 });
 
+// 🚀 Start servidor
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
 
+// 🔧 Auxiliar
 function guessExtension(mimeType = '') {
   if (mimeType.includes('mp4')) return 'm4a';
   if (mimeType.includes('mpeg')) return 'mp3';
