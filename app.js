@@ -182,10 +182,14 @@ function finalizeRecording() {
 
 async function transcribeCurrentAudio() {
   const answer = state.answers[state.currentIndex];
-  if (!answer.audioBlob) {
-    showNotice(els.questionNotice, 'Grave uma resposta antes de transcrever.', 'warning');
-    return;
-  }
+if (!answer.audioBlob || answer.audioBlob.size === 0) {
+  showNotice(
+    els.questionNotice,
+    'A gravação ficou vazia. Grave novamente e fale por pelo menos 2 segundos.',
+    'warning'
+  );
+  return;
+}
 
   hideNotice(els.questionNotice);
   els.btnTranscribe.disabled = true;
