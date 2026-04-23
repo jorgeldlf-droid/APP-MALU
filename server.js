@@ -7,7 +7,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -23,11 +22,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
-
 app.options('*', cors());
 app.use(express.json());
 
-// SERVE OS ARQUIVOS DA PRÓPRIA RAIZ
 app.use(express.static(__dirname));
 
 let client = null;
@@ -68,16 +65,17 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 
     const response = await client.audio.transcriptions.create({
       file: audioFile,
-      model: 'gpt-4o-mini-transcribe',
-      language: 'pt'
+      model: 'whisper-1',
+      language: 'pt',
+      response_format: 'text'
     });
 
     return res.json({
-      text: response.text || ''
+      text: typeof response === 'string' ? response : (response.text || '')
     });
+
   } catch (error) {
     console.error('Erro na transcrição:', error);
-
     return res.status(500).json({
       error:
         error?.message ||
@@ -87,7 +85,6 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
-// FALLBACK PARA ABRIR O APP
 app.get('*', (_req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
