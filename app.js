@@ -197,7 +197,7 @@ async function transcribeCurrentAudio() {
     formData.append('questionLabel', QUESTIONS[state.currentIndex].label);
     formData.append('questionText', QUESTIONS[state.currentIndex].text);
 
-    const API_BASE_URL = 'https://app-malu-backend.onrender.com';
+    
 
 const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
   method: 'POST',
