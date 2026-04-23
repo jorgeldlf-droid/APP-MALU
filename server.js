@@ -3,18 +3,21 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import OpenAI, { toFile } from 'openai';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 
-// Upload de áudio em memória
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 } // 25MB
+  limits: { fileSize: 25 * 1024 * 1024 }
 });
 
 const port = process.env.PORT || 3000;
 
-// 🔥 CORS LIBERADO (evita erro de fetch)
 app.use(cors({
   origin: true,
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -24,7 +27,9 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
-// 🔑 Cliente OpenAI
+// SERVE OS ARQUIVOS DA PRÓPRIA RAIZ
+app.use(express.static(__dirname));
+
 let client = null;
 if (process.env.OPENAI_API_KEY) {
   client = new OpenAI({
@@ -32,7 +37,6 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// 🔍 Health check
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
@@ -40,7 +44,6 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// 🎤 Transcrição
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
@@ -72,7 +75,6 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
     return res.json({
       text: response.text || ''
     });
-
   } catch (error) {
     console.error('Erro na transcrição:', error);
 
@@ -85,12 +87,15 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 });
 
-// 🚀 Start servidor
+// FALLBACK PARA ABRIR O APP
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
 
-// 🔧 Auxiliar
 function guessExtension(mimeType = '') {
   if (mimeType.includes('mp4')) return 'm4a';
   if (mimeType.includes('mpeg')) return 'mp3';
