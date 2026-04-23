@@ -1,6 +1,6 @@
-const { toFile } = require('openai');
 const OpenAI = require('openai').default;
-const formidable = require('formidable');
+const { toFile } = require('openai');
+const { IncomingForm } = require('formidable');
 const fs = require('fs');
 
 module.exports = async function handler(req, res) {
@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
   try {
-    const form = formidable({ keepExtensions: true });
+    const form = new IncomingForm({ keepExtensions: true });
 
     const [fields, files] = await form.parse(req);
 
