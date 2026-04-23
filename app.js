@@ -203,7 +203,8 @@ if (!answer.audioBlob || answer.audioBlob.size === 0) {
 
 const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
   method: 'POST',
-  body: formData
+  body: formData,
+  mode: 'cors'
 });
 
     const data = await response.json();
