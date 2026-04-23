@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const frontendDir = path.resolve(__dirname, '../frontend');
+
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(frontendDir));
+
 
 let client = null;
 if (process.env.OPENAI_API_KEY) {
@@ -62,9 +62,7 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
 }
 });
 
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(frontendDir, 'index.html'));
-});
+
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
