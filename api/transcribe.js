@@ -1,18 +1,49 @@
 import OpenAI, { toFile } from 'openai';
-import multer from 'multer';
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }
-});
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
-function runMiddleware(req, res, fn) {
+async function getRawBody(req) {
   return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) return reject(result);
-      return resolve(result);
-    });
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
   });
+}
+
+function parseBoundary(contentType) {
+  const match = contentType?.match(/boundary=([^\s;]+)/);
+  return match ? match[1] : null;
+}
+
+function extractAudioFromMultipart(buffer, boundary) {
+  const boundaryBuffer = Buffer.from('--' + boundary);
+  const parts = [];
+  let start = 0;
+
+  while (start < buffer.length) {
+    const boundaryIndex = buffer.indexOf(boundaryBuffer, start);
+    if (boundaryIndex === -1) break;
+    const headerStart = boundaryIndex + boundaryBuffer.length + 2;
+    const headerEnd = buffer.indexOf(Buffer.from('\r\n\r\n'), headerStart);
+    if (headerEnd === -1) break;
+    const header = buffer.slice(headerStart, headerEnd).toString();
+    const dataStart = headerEnd + 4;
+    const nextBoundary = buffer.indexOf(boundaryBuffer, dataStart);
+    const dataEnd = nextBoundary === -1 ? buffer.length : nextBoundary - 2;
+    if (header.includes('name="audio"')) {
+      const mimeMatch = header.match(/Content-Type:\s*([^\r\n]+)/i);
+      const mime = mimeMatch ? mimeMatch[1].trim() : 'audio/webm';
+      parts.push({ data: buffer.slice(dataStart, dataEnd), mime });
+    }
+    start = nextBoundary === -1 ? buffer.length : nextBoundary;
+  }
+
+  return parts[0] || null;
 }
 
 function guessExtension(mimeType = '') {
@@ -23,43 +54,36 @@ function guessExtension(mimeType = '') {
   return 'webm';
 }
 
-export const config = {
-  api: {
-    bodyParser: false
-  }
-};
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido.' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
   try {
-    await runMiddleware(req, res, upload.single('audio'));
+    const contentType = req.headers['content-type'] || '';
+    const boundary = parseBoundary(contentType);
 
-    if (!req.file) {
-      return res.status(400).json({ error: 'Nenhum arquivo de áudio foi enviado.' });
+    if (!boundary) {
+      return res.status(400).json({ error: 'Content-Type inválido.' });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'API key não configurada.' });
+    const rawBody = await getRawBody(req);
+    const audioPart = extractAudioFromMultipart(rawBody, boundary);
+
+    if (!audioPart) {
+      return res.status(400).json({ error: 'Nenhum arquivo de áudio encontrado.' });
     }
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const ext = guessExtension(audioPart.mime);
 
-    const ext = guessExtension(req.file.mimetype);
     const audioFile = await toFile(
-      req.file.buffer,
+      audioPart.data,
       `audio.${ext}`,
-      { type: req.file.mimetype || 'audio/webm' }
+      { type: audioPart.mime }
     );
 
     const response = await client.audio.transcriptions.create({
