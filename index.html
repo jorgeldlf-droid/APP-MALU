@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f5b4f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Anamnese" />
+  <title>Anamnese por Voz</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">Anamnese digital</p>
+      <h1>Ficha do Paciente</h1>
+      <p class="hero-sub">Responda às perguntas por voz, revise as transcrições e gere o PDF final.</p>
+      <div class="progress-wrap" aria-hidden="true">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+      <p id="progressText" class="progress-text">Toque em iniciar para começar</p>
+    </header>
+
+    <main class="content">
+      <section id="screenIntro" class="screen active card stack gap-lg">
+        <div>
+          <h2>Como funciona</h2>
+          <div class="tips">
+            <div class="tip"><span>1</span> O app pedirá acesso ao microfone apenas durante o uso.</div>
+            <div class="tip"><span>2</span> Toque em gravar, responda com calma e aguarde a transcrição.</div>
+            <div class="tip"><span>3</span> Revise o texto transcrito antes de seguir.</div>
+            <div class="tip"><span>4</span> No final, gere e compartilhe o PDF.</div>
+          </div>
+        </div>
+
+        <div id="supportNotice" class="notice warning hidden"></div>
+        <button id="btnStart" class="btn btn-primary btn-lg">Iniciar atendimento</button>
+      </section>
+
+      <section id="screenQuestion" class="screen card stack gap-lg">
+        <div class="row between center">
+          <span id="questionCounter" class="badge">Pergunta 1 de 5</span>
+          <span id="recordingState" class="state">Aguardando</span>
+        </div>
+
+        <div>
+          <p id="questionLabel" class="question-label">A)</p>
+          <h2 id="questionText" class="question-text"></h2>
+        </div>
+
+        <div class="stack gap-sm">
+          <label class="field-label">Transcrição da resposta</label>
+          <textarea id="answerText" rows="7" placeholder="A transcrição aparecerá aqui..."></textarea>
+          <p class="field-help">Você pode editar o texto antes de continuar.</p>
+        </div>
+
+        <div id="questionNotice" class="notice hidden"></div>
+
+        <div class="controls-grid">
+          <button id="btnRecord" class="btn btn-primary">Gravar</button>
+          <button id="btnStop" class="btn btn-danger" disabled>Parar</button>
+          <button id="btnTranscribe" class="btn btn-secondary" disabled>Transcrever áudio</button>
+          <button id="btnPlay" class="btn btn-secondary" disabled>Ouvir gravação</button>
+        </div>
+
+        <audio id="audioPlayer" controls class="hidden"></audio>
+
+        <div class="row gap-sm wrap">
+          <button id="btnSkip" class="btn btn-outline">Pular</button>
+          <button id="btnNext" class="btn btn-primary flex-1">Próxima</button>
+        </div>
+      </section>
+
+      <section id="screenReview" class="screen card stack gap-lg">
+        <div>
+          <h2>Revisão final</h2>
+          <p class="muted">Confira as respostas antes de gerar o PDF.</p>
+        </div>
+
+        <div id="reviewList" class="stack gap-md"></div>
+
+        <div id="shareNotice" class="notice success hidden"></div>
+
+        <div class="stack gap-sm">
+          <button id="btnPdf" class="btn btn-primary btn-lg">Gerar PDF</button>
+          <button id="btnShare" class="btn btn-secondary btn-lg" disabled>Compartilhar PDF</button>
+          <button id="btnRestart" class="btn btn-outline">Iniciar nova ficha</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
