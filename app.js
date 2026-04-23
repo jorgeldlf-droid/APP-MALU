@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://app-malu-backend.onrender.com'
+const API_BASE_URL = 'https://app-malu-backend.onrender.com';
 const QUESTIONS = [
   { label: 'A', text: 'Quais são os medicamentos de uso contínuo que você utiliza?' },
   { label: 'B', text: 'Você tem alguma alergia? Se sim, a quê?' },
