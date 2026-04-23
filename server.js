@@ -14,11 +14,32 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 const port = process.env.PORT || 3000;
 
+const allowedOrigins = [
+  'https://app-malu.vercel.app',
+  'https://app-malu-87snh5631-jorgeldlf-8468s-projects.vercel.app'
+];
+
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST'],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+  'https://app-malu.vercel.app'
+];
+
+const allowedOrigins = [
+  'https://app-malu.vercel.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, true); // libera geral temporário
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
+
+app.options('*', cors());
 app.use(express.json());
 
 
